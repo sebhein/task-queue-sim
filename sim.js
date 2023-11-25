@@ -10,6 +10,8 @@ function randomInt(min, max) {
 class Simulation extends PIXI.Application {
   constructor({
     element,
+    queueOptions,
+    serverOptions,
   }) {
     super({
       backgroundAlpha: 0,
@@ -18,6 +20,8 @@ class Simulation extends PIXI.Application {
 
     this.runSimulation = false;
     this.agents = [];
+    this.queues = [];
+    this.servers = [];
     //this.debug = true;
 
     element.innerHTML = '';
@@ -47,12 +51,6 @@ class Simulation extends PIXI.Application {
     container.appendChild(this.view);
 
 
-    this.queues = []
-    const queueOptions = [
-      { name: 'default', color: 0xEDC951, minTS: 100, maxTS: 10000 },
-      { name: 'slowQueue', color: 0xEB6841, minTS: 10000, maxTS: 50000 },
-      //{ name: 'fastTrack', color: 0x0F942F, minTS: 100, maxTS: 500 },
-    ];
     const taskWidth = 40;
     const queueY = 50;
     const queuePadding = this.screen.width / 4
@@ -66,6 +64,7 @@ class Simulation extends PIXI.Application {
         minTS: opts.minTS,
         maxTS: opts.maxTS,
         color: opts.color,
+        fillRate: opts.fillRate
       });
       queue.fill(1);
       this.queues.push(queue);
@@ -76,20 +75,19 @@ class Simulation extends PIXI.Application {
       bottom: this.screen.height - this.screen.height * 0.1,
     });
 
-    const numServers = 5;
     const pad = 10;
     const workerSize = taskWidth * 1.2;
     const serverSize = workerSize * 2 + pad * 4;
-    const serverPadding = (this.screen.width - numServers * serverSize) / numServers + 1;
-    this.servers = [];
+    const serverPadding = (this.screen.width - serverOptions.length * serverSize) / serverOptions.length + 1;
     const serverY = this.screen.height - (workerSize + 2 * pad) - this.screen.height * 0.3
-    for (let ns = 0; ns < numServers; ns++) {
+    for (let ns = 0; ns < serverOptions.length; ns++) {
       const s = new Server(this, {
         x: 0.5 * serverPadding + (ns * serverPadding) + ns * serverSize,
         y: serverY,
         workerSize: workerSize,
         serverSize: serverSize,
         padding: pad,
+        // TODO: set the queues from which this server may pick up from
       });
       this.servers.push(s);
     }
@@ -288,7 +286,6 @@ class ThruPutMeasure extends Agent {
     //this.lineTo(this.simulation.screen.width - 20, this.bottom);
     //this.moveTo(20, this.bottom);
     //this.lineTo(20, this.bottom - 100);
-    // draw points
 
     let currentX = this.simulation.screen.width - 100;
     this.moveTo(currentX, this.yForIndex(1));
@@ -298,7 +295,6 @@ class ThruPutMeasure extends Agent {
       this.lineTo(currentX, this.yForIndex(i));
     }
     
-    //this.endFill();
   }
 
   update(delta) {
@@ -327,7 +323,7 @@ class ThruPutMeasure extends Agent {
 
 
 class QueueBucket extends Agent {
-  constructor(simulation, { name, x, y, size, tasksPerSecond, minTS, maxTS, color }) {
+  constructor(simulation, { name, x, y, size, tasksPerSecond, minTS, maxTS, color, fillRate }) {
     super(simulation);
     this.name = name;
     this.x = x;
@@ -341,6 +337,7 @@ class QueueBucket extends Agent {
     this._minTaskSize = minTS;
     this._maxTaskSize = maxTS;
     this.tasksPickedUp = 0;
+    this.fillRate = fillRate
 
     this.text = new PIXI.Text(this.name, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
     this.text.x = this._width / 2 - this.text.width / 2;
@@ -384,12 +381,9 @@ class QueueBucket extends Agent {
     if (this.tasks.length == 10) {
       return
     }
-    if (this.name == 'slowQueue') {
-      if (Math.random() < 0.01) {
-        this.fill(this.tasks.length + 1);
-      }
-    } else {
-      this.fill(10);
+
+    if (Math.random() < this.fillRate) {
+      this.fill(this.tasks.length + 1);
     }
 
     if (this.tasks.length == 0) {
@@ -452,6 +446,9 @@ class Task extends Agent {
 
   update(delta) {
     super.update(delta);
+    if (this.destroyed) {
+      return;
+    }
     if (this.processing) {
       this.duration = Math.max(this.duration - delta * 100, 100);
     }
@@ -477,10 +474,37 @@ class Task extends Agent {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  let sim = new Simulation({
-    element: document.getElementById("sim"),
+  new Simulation({
+    element: document.getElementById("simSlowQueue"),
+    queueOptions: [
+      { name: 'default', color: 0xEDC951, minTS: 100, maxTS: 10000, fillRate: 1 },
+      { name: 'slowQueue', color: 0xEB6841, minTS: 10000, maxTS: 50000, fillRate: 0.01 },
+    ],
+    serverOptions: [
+      ["default", "slowQueue"],
+      ["default", "slowQueue"],
+      ["default", "slowQueue"],
+      ["default", "slowQueue"],
+    ], 
   });
 
+  new Simulation({
+    element: document.getElementById("simFastQueue"),
+    queueOptions: [
+      { name: 'default', color: 0xEDC951, minTS: 300, maxTS: 10000, fillRate: 1 },
+      { name: 'fastQueue', color: 0xEB6841, minTS: 100, maxTS: 500, fillRate: 0.5 },
+    ],
+    serverOptions: [
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+    ], 
+  });
+
+  //new Simulation({
+    //element: document.getElementById("simServerSegregation"),
+  //});
 
   //// Initialize PIXI Application
   //const app = new PIXI.Application({ width: 800, height: 600 });
