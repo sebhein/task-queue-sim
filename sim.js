@@ -259,32 +259,68 @@ class ThruPutMeasure extends Agent {
     super(simulation);
     this.queues = queues;
     this.bottom = bottom;
-    this.ups = 0;
+    this.elapsedUpdates = 0;
+    this.points = [];
+    this.max = 0;
 
-    this.beginFill(0x00A0B0, 0.3);
+    this.draw();
+
+    this.currentValueText = new PIXI.Text(0, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
+    this.currentValueText.x = this.simulation.screen.width - this.currentValueText.width - 50;
+    this.currentValueText.y = bottom - 50 - this.currentValueText.height;
+    this.addChild(this.currentValueText);
+    this.maxValueText = new PIXI.Text(this.max, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
+    this.maxValueText.x = this.simulation.screen.width - this.maxValueText.width - 50;
+    this.maxValueText.y = bottom - 50 - this.maxValueText.height - this.currentValueText.height;
+    this.addChild(this.maxValueText);
+  }
+
+  yForIndex(index) {
+    return this.bottom - 40 - this.points[this.points.length - index] * 4;
+  }
+
+  draw() {
+    this.clear();
+    //this.beginFill(0x00A0B0, 0.3);
     this.lineStyle(1, 0x00A0B0, 0.5, 0);
-    this.moveTo(20, bottom);
-    this.lineTo(this.simulation.screen.width - 20, bottom);
-    this.moveTo(20, bottom);
-    this.lineTo(20, bottom - 100);
-    this.endFill();
+    // draw axis
+    //this.moveTo(20, this.bottom);
+    //this.lineTo(this.simulation.screen.width - 20, this.bottom);
+    //this.moveTo(20, this.bottom);
+    //this.lineTo(20, this.bottom - 100);
+    // draw points
 
-    this.text = new PIXI.Text(0, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
-    this.text.x = this.simulation.screen.width - this.text.width - 50;
-    this.text.y = bottom - 50 - this.text.height;
-    this.addChild(this.text);
+    let currentX = this.simulation.screen.width - 100;
+    this.moveTo(currentX, this.yForIndex(1));
+    // start at 1 to skip the first point, setting the cursor to intial point above
+    for (let i = 2; i < this.points.length; i++) {
+      currentX -= this.simulation.screen.width / 10;
+      this.lineTo(currentX, this.yForIndex(i));
+    }
+    
+    //this.endFill();
   }
 
   update(delta) {
-    this.ups++;
-    if (this.ups >= this.simulation.ticker.FPS) {
+    this.elapsedUpdates++;
+    if (this.elapsedUpdates >= this.simulation.ticker.FPS) {
       let total = 0;
       for (let q of this.queues) {
         total += q.tasksPickedUp;
         q.tasksPickedUp = 0;
       }
-      this.text.text = total;
-      this.ups = 0;
+      this.points.push(total);
+      if (this.points.length > 10) {
+        this.points.shift();
+      }
+      const sum = this.points.reduce((a, b) => a + b, 0);
+      this.currentValueText.text = sum;
+      if (sum > this.max) {
+        this.max = sum;
+        this.maxValueText.text = this.max;
+      }
+      this.elapsedUpdates = 0;
+      this.draw();
     }
   }
 }
