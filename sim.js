@@ -61,10 +61,8 @@ class Simulation extends PIXI.Application {
         x: queuePadding + (i * queueSpacing) - i * (taskWidth + 10),
         y: queueY,
         size: taskWidth + 10,
-        minTS: opts.minTS,
-        maxTS: opts.maxTS,
         color: opts.color,
-        fillRate: opts.fillRate
+        taskGenerator: opts.taskGenerator,
       });
       queue.fill(1);
       this.queues.push(queue);
@@ -294,7 +292,7 @@ class ThruPutMeasure extends Agent {
       currentX -= this.simulation.screen.width / 10;
       this.lineTo(currentX, this.yForIndex(i));
     }
-    
+
   }
 
   update(delta) {
@@ -323,7 +321,7 @@ class ThruPutMeasure extends Agent {
 
 
 class QueueBucket extends Agent {
-  constructor(simulation, { name, x, y, size, tasksPerSecond, minTS, maxTS, color, fillRate }) {
+  constructor(simulation, { name, x, y, size, tasksPerSecond, color, taskGenerator }) {
     super(simulation);
     this.name = name;
     this.x = x;
@@ -333,11 +331,9 @@ class QueueBucket extends Agent {
     this._height = size * 3;
     //this._color = 0x00AEDB;
     this._color = color;
+    this.taskGenerator = taskGenerator;
     this.tasks = [];
-    this._minTaskSize = minTS;
-    this._maxTaskSize = maxTS;
     this.tasksPickedUp = 0;
-    this.fillRate = fillRate
 
     this.text = new PIXI.Text(this.name, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
     this.text.x = this._width / 2 - this.text.width / 2;
@@ -363,17 +359,19 @@ class QueueBucket extends Agent {
     return nextTask;
   }
 
-  fill(toFill) {
+  fill() {
+    const durations = this.taskGenerator.generate();
     const alreadyQueued = this.tasks.length;
-    for (let i = 0; i < toFill - alreadyQueued; i++) {
+    for (let i = 0; i < durations.length; i++) {
       this.tasks.push(new Task(this.simulation, {
         x: this.x + this._width / 2,
         y: this.y + this._height - (i + alreadyQueued) * (this.taskWidth + 1),
-        duration: randomInt(this._minTaskSize, this._maxTaskSize),
+        duration: durations[i],
         size: this.taskWidth,
         color: this._color,
       }));
     }
+
   }
 
   update(delta) {
@@ -382,9 +380,7 @@ class QueueBucket extends Agent {
       return
     }
 
-    if (Math.random() < this.fillRate) {
-      this.fill(this.tasks.length + 1);
-    }
+    this.fill();
 
     if (this.tasks.length == 0) {
       return;
@@ -473,37 +469,67 @@ class Task extends Agent {
   }
 }
 
+class TaskGenerator {
+  constructor(rates) {
+    // rates is a list of [[rate, min, max], ...]
+    this.rates = rates
+  }
+
+  generate() {
+    let generatedTaskDurations = [];
+    for (let i = 0; i < this.rates.length; i++) {
+      if (Math.random() < this.rates[i][0]) {
+        generatedTaskDurations.push(randomInt(this.rates[i][1], this.rates[i][2]));
+      }
+    }
+    return generatedTaskDurations;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   new Simulation({
     element: document.getElementById("simSlowQueue"),
+    // TODO: develop a more sophisticated task generator
     queueOptions: [
-      { name: 'default', color: 0xEDC951, minTS: 100, maxTS: 10000, fillRate: 1 },
-      { name: 'slowQueue', color: 0xEB6841, minTS: 10000, maxTS: 50000, fillRate: 0.01 },
+      {
+        name: 'default',
+        color: 0xEDC951,
+        taskGenerator: new TaskGenerator([
+          [1, 100, 10000],
+        ]),
+      },
+      {
+        name: 'slowQueue',
+        color: 0xEB6841,
+        taskGenerator: new TaskGenerator([
+          [0.01, 10000, 50000],
+        ]),
+      },
     ],
     serverOptions: [
       ["default", "slowQueue"],
       ["default", "slowQueue"],
       ["default", "slowQueue"],
       ["default", "slowQueue"],
-    ], 
-  });
-
-  new Simulation({
-    element: document.getElementById("simFastQueue"),
-    queueOptions: [
-      { name: 'default', color: 0xEDC951, minTS: 300, maxTS: 10000, fillRate: 1 },
-      { name: 'fastQueue', color: 0xEB6841, minTS: 100, maxTS: 500, fillRate: 0.5 },
     ],
-    serverOptions: [
-      ["default", "fastQueue"],
-      ["default", "fastQueue"],
-      ["default", "fastQueue"],
-      ["default", "fastQueue"],
-    ], 
   });
 
   //new Simulation({
-    //element: document.getElementById("simServerSegregation"),
+  //element: document.getElementById("simFastQueue"),
+  //queueOptions: [
+  //{ name: 'default', color: 0xEDC951, minTS: 300, maxTS: 10000, fillRate: 1 },
+  //{ name: 'fastQueue', color: 0xEB6841, minTS: 100, maxTS: 500, fillRate: 0.5 },
+  //],
+  //serverOptions: [
+  //["default", "fastQueue"],
+  //["default", "fastQueue"],
+  //["default", "fastQueue"],
+  //["default", "fastQueue"],
+  //], 
+  //});
+
+  //new Simulation({
+  //element: document.getElementById("simServerSegregation"),
   //});
 
   //// Initialize PIXI Application
