@@ -277,13 +277,7 @@ class ThruPutMeasure extends Agent {
 
   draw() {
     this.clear();
-    //this.beginFill(0x00A0B0, 0.3);
     this.lineStyle(1, 0x00A0B0, 0.5, 0);
-    // draw axis
-    //this.moveTo(20, this.bottom);
-    //this.lineTo(this.simulation.screen.width - 20, this.bottom);
-    //this.moveTo(20, this.bottom);
-    //this.lineTo(20, this.bottom - 100);
 
     let currentX = this.simulation.screen.width - 100;
     this.moveTo(currentX, this.yForIndex(1));
@@ -334,20 +328,19 @@ class QueueBucket extends Agent {
     this.taskGenerator = taskGenerator;
     this.tasks = [];
     this.tasksPickedUp = 0;
+    this.elapsedUpdates = 0;
 
-    this.text = new PIXI.Text(this.name, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
+    this.text = new PIXI.Text(
+      this.name,
+      { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, }
+    );
     this.text.x = this._width / 2 - this.text.width / 2;
     this.text.y = - this.text.height - 10;
     this.addChild(this.text);
 
     this.beginFill(this._color, 0.3);
     this.lineStyle(1, this._color, 0.5, 0)
-    this.drawRect(
-      0,
-      0,
-      this._width,
-      this._height,
-    );
+    this.drawRect(0, 0, this._width, this._height);
     this.endFill();
   }
 
@@ -360,6 +353,9 @@ class QueueBucket extends Agent {
   }
 
   fill() {
+    if (this.tasks.length >= 20) {
+      return;
+    }
     const durations = this.taskGenerator.generate();
     const alreadyQueued = this.tasks.length;
     for (let i = 0; i < durations.length; i++) {
@@ -376,11 +372,12 @@ class QueueBucket extends Agent {
 
   update(delta) {
     super.update(delta);
-    if (this.tasks.length == 10) {
-      return
-    }
 
-    this.fill();
+    this.elapsedUpdates++;
+    if (this.elapsedUpdates >= this.simulation.ticker.FPS) {
+      this.fill();
+      this.elapsedUpdates = 0;
+    }
 
     if (this.tasks.length == 0) {
       return;
@@ -407,13 +404,14 @@ class Task extends Agent {
     this.y = y;
     this.initSize = size;
     this.duration = duration;
-    this._color = color;
+    this.color = color;
+    //this._color = color;
     this.isVisibile = false;
     this.processing = false;
     this.inTransit = false;
     this.speed = 10;
   }
-
+  
   get height() {
     const elapsedHeight = this.initSize * Math.min(this.duration, MAX_DURATION) / MAX_DURATION;
     return Math.max(elapsedHeight, 5);
@@ -435,7 +433,7 @@ class Task extends Agent {
     if (!this.isVisibile) {
       return;
     }
-    this.beginFill(this._color);
+    this.beginFill(this.color);
     this.drawCircle(0, 0, this.radius);
     this.endFill();
   }
@@ -471,15 +469,17 @@ class Task extends Agent {
 
 class TaskGenerator {
   constructor(rates) {
-    // rates is a list of [[rate, min, max], ...]
+    // rates is a list of [[rate, count, min, max], ...]
     this.rates = rates
   }
 
   generate() {
     let generatedTaskDurations = [];
     for (let i = 0; i < this.rates.length; i++) {
-      if (Math.random() < this.rates[i][0]) {
-        generatedTaskDurations.push(randomInt(this.rates[i][1], this.rates[i][2]));
+      for (let j = 0; j < this.rates[i][1]; j++) {
+        if (Math.random() < this.rates[i][0]) {
+          generatedTaskDurations.push(randomInt(this.rates[i][2], this.rates[i][3]));
+        }
       }
     }
     return generatedTaskDurations;
@@ -495,14 +495,15 @@ document.addEventListener("DOMContentLoaded", function() {
         name: 'default',
         color: 0xEDC951,
         taskGenerator: new TaskGenerator([
-          [1, 100, 10000],
+          [1, 4, 300, 10000],
+          [0.5, 5, 100, 500],
         ]),
       },
       {
         name: 'slowQueue',
         color: 0xEB6841,
         taskGenerator: new TaskGenerator([
-          [0.01, 10000, 50000],
+          [0.1, 5, 10000, 50000],
         ]),
       },
     ],
@@ -514,19 +515,32 @@ document.addEventListener("DOMContentLoaded", function() {
     ],
   });
 
-  //new Simulation({
-  //element: document.getElementById("simFastQueue"),
-  //queueOptions: [
-  //{ name: 'default', color: 0xEDC951, minTS: 300, maxTS: 10000, fillRate: 1 },
-  //{ name: 'fastQueue', color: 0xEB6841, minTS: 100, maxTS: 500, fillRate: 0.5 },
-  //],
-  //serverOptions: [
-  //["default", "fastQueue"],
-  //["default", "fastQueue"],
-  //["default", "fastQueue"],
-  //["default", "fastQueue"],
-  //], 
-  //});
+  new Simulation({
+    element: document.getElementById("simFastQueue"),
+    queueOptions: [
+      {
+        name: 'default',
+        color: 0xEDC951,
+        taskGenerator: new TaskGenerator([
+          [1, 4, 300, 10000],
+          [0.1, 5, 10000, 50000],
+        ]),
+      },
+      {
+        name: 'fastQueue',
+        color: 0xEB6841,
+        taskGenerator: new TaskGenerator([
+          [0.5, 5, 100, 500],
+        ]),
+      },
+    ],
+    serverOptions: [
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+      ["default", "fastQueue"],
+    ], 
+  });
 
   //new Simulation({
   //element: document.getElementById("simServerSegregation"),
