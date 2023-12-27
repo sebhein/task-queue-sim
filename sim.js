@@ -1,3 +1,9 @@
+// Use this to guide color choices: https://blog.datawrapper.de/beautifulcolors/
+const RED = 0xE56997;
+const BLUE = 0x66D2D6;
+const GREEN = 0x07BB9C;
+const YELLOW = 0xFFD743;
+
 var _globalId = 0;
 function nextId() {
   return _globalId++;
@@ -224,7 +230,8 @@ class Server extends Agent {
     super(simulation);
     this.x = x;
     this.y = y;
-    this.color = 0x00A0B0;
+    //this.color = 0x00A0B0;
+    this.color = BLUE;
     this.currentQueue = 0;
 
     const height = workerSize + 2 * padding;
@@ -493,7 +500,8 @@ document.addEventListener("DOMContentLoaded", function() {
     queueOptions: [
       {
         name: 'default',
-        color: 0xEDC951,
+        //color: 0xEDC951,
+        color: YELLOW,
         taskGenerator: new TaskGenerator([
           [1, 4, 300, 10000],
           [0.5, 5, 100, 500],
@@ -501,7 +509,8 @@ document.addEventListener("DOMContentLoaded", function() {
       },
       {
         name: 'slowQueue',
-        color: 0xEB6841,
+        //color: 0xEB6841,
+        color: RED,
         taskGenerator: new TaskGenerator([
           [0.1, 5, 10000, 50000],
         ]),
@@ -520,7 +529,8 @@ document.addEventListener("DOMContentLoaded", function() {
     queueOptions: [
       {
         name: 'default',
-        color: 0xEDC951,
+        //color: 0xEDC951,
+        color: YELLOW,
         taskGenerator: new TaskGenerator([
           [1, 4, 300, 10000],
           [0.1, 5, 10000, 50000],
@@ -528,7 +538,8 @@ document.addEventListener("DOMContentLoaded", function() {
       },
       {
         name: 'fastQueue',
-        color: 0xEB6841,
+        //color: 0xEB6841,
+        color: GREEN,
         taskGenerator: new TaskGenerator([
           [0.5, 5, 100, 500],
         ]),
