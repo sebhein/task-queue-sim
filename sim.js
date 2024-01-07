@@ -1,4 +1,4 @@
-PIXI.settings.RESOLUTION = window.devicePixelRatio;
+//PIXI.settings.RESOLUTION = window.devicePixelRatio;
 
 // Use this to guide color choices: https://blog.datawrapper.de/beautifulcolors/
 const RED = 0xE56997;
@@ -286,7 +286,7 @@ class ThruPutMeasure extends Agent {
 
   draw() {
     this.clear();
-    this.lineStyle(1, 0xFFF, 0.5, 0);
+    this.lineStyle(1, "#fff", 0.5, 0);
 
     let currentX = this.simulation.screen.width - 100;
     this.moveTo(currentX, this.yForIndex(1));
