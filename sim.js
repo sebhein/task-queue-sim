@@ -476,16 +476,36 @@ class Task extends Agent {
 
 class TaskGenerator {
   constructor(rates) {
-    // rates is a list of [[rate, count, min, max], ...]
     this.rates = rates
   }
+  
+  generate() {
+    throw new Error("Not implemented");
+  }
+}
+
+class InputTaskGenerator extends TaskGenerator {
+  // rates is a list of [[rate, duration], ...]
 
   generate() {
     let generatedTaskDurations = [];
-    for (let i = 0; i < this.rates.length; i++) {
-      for (let j = 0; j < this.rates[i][1]; j++) {
-        if (Math.random() < this.rates[i][0]) {
-          generatedTaskDurations.push(randomInt(this.rates[i][2], this.rates[i][3]));
+    for (let rate of this.rates) {
+      if (Math.random() < rate[0]) {
+        generatedTaskDurations.push(rate[1]);
+      }
+    }
+  }
+}
+
+class RangedTaskGenerator extends TaskGenerator {
+  // rates is a list of [[rate, count, min, max], ...]
+
+  generate() {
+    let generatedTaskDurations = [];
+    for (let rate of this.rates) {
+      for (let i = 0; i < rate[1]; i++) {
+        if (Math.random() < rate[0]) {
+          generatedTaskDurations.push(randomInt(rate[2], rate[3]));
         }
       }
     }
@@ -502,7 +522,7 @@ document.addEventListener("DOMContentLoaded", function() {
         name: 'default',
         //color: 0xEDC951,
         color: YELLOW,
-        taskGenerator: new TaskGenerator([
+        taskGenerator: new RangedTaskGenerator([
           [1, 4, 300, 10000],
           [0.5, 5, 100, 500],
         ]),
@@ -511,7 +531,7 @@ document.addEventListener("DOMContentLoaded", function() {
         name: 'slowQueue',
         //color: 0xEB6841,
         color: RED,
-        taskGenerator: new TaskGenerator([
+        taskGenerator: new RangedTaskGenerator([
           [0.1, 5, 10000, 50000],
         ]),
       },
@@ -531,7 +551,7 @@ document.addEventListener("DOMContentLoaded", function() {
         name: 'default',
         //color: 0xEDC951,
         color: YELLOW,
-        taskGenerator: new TaskGenerator([
+        taskGenerator: new RangedTaskGenerator([
           [1, 4, 300, 10000],
           [0.1, 5, 10000, 50000],
         ]),
@@ -540,7 +560,7 @@ document.addEventListener("DOMContentLoaded", function() {
         name: 'fastQueue',
         //color: 0xEB6841,
         color: GREEN,
-        taskGenerator: new TaskGenerator([
+        taskGenerator: new RangedTaskGenerator([
           [0.5, 5, 100, 500],
         ]),
       },
