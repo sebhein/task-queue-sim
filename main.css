@@ -1,10 +1,10 @@
-body {
-    background-color: #fff;
-    color: #2e3440;
-    font-size: 14pt;
-    font-family: "Nunito", sans-serif;
-    overflow-x:hidden
-}
+/*body {*/
+    /*background-color: #fff;*/
+    /*color: #2e3440;*/
+    /*font-size: 14pt;*/
+    /*font-family: "Nunito", sans-serif;*/
+    /*overflow-x:hidden*/
+/*}*/
 
 footer {
     padding-top: 2rem;
@@ -46,15 +46,15 @@ footer .container aside.right {
     padding:.5rem
 }
 
-h1, h2, h3, h4, h5, h6 {
-    padding-top: 2rem;
-    font-family: "Lora", serif;
-    line-height:1
-}
+/*h1, h2, h3, h4, h5, h6 {*/
+    /*padding-top: 2rem;*/
+    /*font-family: "Lora", serif;*/
+    /*line-height:1*/
+/*}*/
 
 article {
-    max-width: 780px;
-    margin: auto;
+    /*max-width: 780px;*/
+    /*margin: auto;*/
     padding:1rem
 }
 
