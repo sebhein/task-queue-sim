@@ -268,11 +268,11 @@ class ThruPutMeasure extends Agent {
 
     this.draw();
 
-    this.currentValueText = new PIXI.Text(0, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
+    this.currentValueText = new PIXI.Text(0, { fontFamily: 'Monaco', fontSize: 14, fill: "#dae8dd", });
     this.currentValueText.x = this.simulation.screen.width - this.currentValueText.width - 50;
     this.currentValueText.y = bottom - 50 - this.currentValueText.height;
     this.addChild(this.currentValueText);
-    this.maxValueText = new PIXI.Text(this.max, { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, });
+    this.maxValueText = new PIXI.Text(this.max, { fontFamily: 'Monaco', fontSize: 14, fill: "#dae8dd", });
     this.maxValueText.x = this.simulation.screen.width - this.maxValueText.width - 50;
     this.maxValueText.y = bottom - 50 - this.maxValueText.height - this.currentValueText.height;
     this.addChild(this.maxValueText);
@@ -284,7 +284,7 @@ class ThruPutMeasure extends Agent {
 
   draw() {
     this.clear();
-    this.lineStyle(1, 0x00A0B0, 0.5, 0);
+    this.lineStyle(1, 0xFFF, 0.5, 0);
 
     let currentX = this.simulation.screen.width - 100;
     this.moveTo(currentX, this.yForIndex(1));
@@ -339,7 +339,7 @@ class QueueBucket extends Agent {
 
     this.text = new PIXI.Text(
       this.name,
-      { fontFamily: 'Lora', fontSize: 14, fill: 0x4F372D, }
+      { fontFamily: 'Monaco', fontSize: 14, fill: "#dae8dd", }
     );
     this.text.x = this._width / 2 - this.text.width / 2;
     this.text.y = - this.text.height - 10;
