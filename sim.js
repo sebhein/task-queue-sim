@@ -1,3 +1,5 @@
+PIXI.settings.RESOLUTION = window.devicePixelRatio;
+
 // Use this to guide color choices: https://blog.datawrapper.de/beautifulcolors/
 const RED = 0xE56997;
 const BLUE = 0x66D2D6;
